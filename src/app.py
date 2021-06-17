@@ -22,7 +22,6 @@ def hello_world():
 @app.route('/model/', methods=['POST'])
 @cross_origin()
 def post_model():
-    print("hi")
     if request.method == 'POST':
         print(request.values)
         # body_form_data = request.values['paragraph']
@@ -44,13 +43,14 @@ def post_model():
 def get_similar_words():
     if request.method == 'GET':
         query_params = request.values
+        print(request.values)
         words_str = query_params['base_word']
         print(words_str)
 
         if words_str:
-            # words = words_str.split(',')
+            words = words_str.split(',')
             # search(request.headers['uuid'], words)
-            words = search(request.headers['uuid'], words_str)
+            words = search(request.headers['uuid'], words)
             return {
                 'words': words
             }

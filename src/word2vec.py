@@ -5,15 +5,22 @@ from nltk.corpus import stopwords
 import pandas as pd
 import numpy as np
 import nltk
-from matplotlib import pyplot
-
-from sklearn.decomposition import PCA
+import math
 from sklearn.manifold import TSNE
 
 
-def search(name, key):
+def search(name, keys):
     loaded_model = KeyedVectors.load_word2vec_format(name)
-    similar_words_and_similarity = loaded_model.most_similar(positive=[loaded_model[key]], topn=100)
+    pos = []
+    neg = []
+    for k in keys:
+        if k[0] == '-':
+            neg.append(k[1:])
+        else:
+            pos.append(k)
+    similar_words_and_similarity = loaded_model.most_similar(positive=list(map(lambda key: loaded_model[key], pos)),
+                                                             negative=list(map(lambda key: loaded_model[key], neg)),
+                                                             topn=100)
     # similar_words_and_similarity.append((key, 1))
     similar_words_and_similarity.sort(key=lambda x: x[1])
     similar_words = list(map(lambda x: x[0], similar_words_and_similarity))
@@ -26,7 +33,8 @@ def search(name, key):
 
 
 def train(sentences, model_name):
-    model = Word2Vec(sentences=sentences, vector_size=50, window=7, min_count=1, workers=4, sg=0)
+    min_count_arg = int(math.log10(len(sentences)))
+    model = Word2Vec(sentences=sentences, vector_size=100, window=7, min_count=min_count_arg, workers=4, sg=0)
     model.wv.sort_by_descending_frequency()
     model.wv.save_word2vec_format(model_name)  # 모델 저장
 
@@ -51,8 +59,8 @@ def preprocess(article):
     df['clean_doc'] = df['document'].str.replace("[^a-zA-Z]", " ")
     # 길이가 3이하인 단어는 제거 (길이가 짧은 단어 제거)
     df['clean_doc'] = df['clean_doc'].apply(lambda x: ' '.join([w for w in x.split() if len(w) > 2]))
-    # 전체 단어에 대한 소문자 변환
-    df['clean_doc'] = df['clean_doc'].apply(lambda x: x.lower())
+    # # 전체 단어에 대한 소문자 변환
+    # df['clean_doc'] = df['clean_doc'].apply(lambda x: x.lower())
 
     df.replace("", float("NaN"), inplace=True)
     df.dropna(inplace=True)
@@ -73,7 +81,7 @@ def preprocess(article):
 
 
 if __name__ == '__main__':
-    with open("test.txt", "r") as myfile:
+    with open("../dataset/apple.txt", "r") as myfile:
         data = myfile.read()
         print(train(preprocess(data), "test"))
-        print(search("test", "emma"))
+        # print(search("test", "emma"))
